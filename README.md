@@ -4,6 +4,8 @@ An end-to-end content-moderation pipeline built in self-hosted n8n: it receives 
 
 Built as a hands-on learning project to practise the kind of automation used in Product Ops, BizOps and Trust & Safety teams.
 
+📄 **Full case study** (findings, design decisions, what broke and why): [Read on Notion](https://aminkhalesianprojects.notion.site/Case-Study-Trust-Safety-Report-Triage-Pipeline-in-n8n-3f85adec5ffb81979e7ae4fb5eee8e26?pvs=74)
+
 ![Architecture](architecture.png)
 
 ## What it does
