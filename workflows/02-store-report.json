@@ -1,0 +1,377 @@
+{
+  "name": "TS - Store Report",
+  "nodes": [
+    {
+      "parameters": {
+        "workflowInputs": {
+          "values": [
+            {
+              "name": "report_id"
+            },
+            {
+              "name": "reporter_id"
+            },
+            {
+              "name": "content_text"
+            },
+            {
+              "name": "user_reason"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "0383d947-8068-416a-97f1-78445e6af665",
+      "name": "FromIntake"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Rt5u7usGrGMeiwvL",
+          "mode": "list",
+          "cachedResultName": "ts_reports",
+          "cachedResultUrl": "/projects/<project-id>/datatables/Rt5u7usGrGMeiwvL"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "report_id",
+              "keyValue": "={{ $json.report_id }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "49593fbe-8d68-4135-8910-478978e4b830",
+      "name": "CheckReportExists",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "c994df7e-0385-4fbe-b663-31c80101bb7c",
+              "leftValue": "={{ $json.report_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "4784f609-88eb-48a7-b109-85c233da04ef",
+      "name": "ReportIsNew"
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "Rt5u7usGrGMeiwvL",
+          "mode": "list",
+          "cachedResultName": "ts_reports",
+          "cachedResultUrl": "/projects/<project-id>/datatables/Rt5u7usGrGMeiwvL"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "report_id": "={{ $('FromIntake').item.json.report_id }}",
+            "reporter_id": "={{ $('FromIntake').item.json.reporter_id }}",
+            "content_text": "={{ $('FromIntake').item.json.content_text }}",
+            "user_reason": "={{ $('FromIntake').item.json.user_reason }}",
+            "received_at": "={{ $now }}",
+            "status": "new"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "report_id",
+              "displayName": "report_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "reporter_id",
+              "displayName": "reporter_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "content_text",
+              "displayName": "content_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "user_reason",
+              "displayName": "user_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "received_at",
+              "displayName": "received_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "ai_category",
+              "displayName": "ai_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "ai_confidence",
+              "displayName": "ai_confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "triaged_at",
+              "displayName": "triaged_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "escalated_at",
+              "displayName": "escalated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "8eb39811-ca04-4ced-a993-decafe7acc76",
+      "name": "InsertReport"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ba664e82-e785-4d8e-96d8-3641a9637825",
+              "name": "report_id",
+              "value": "={{ $('FromIntake').item.json.report_id }}",
+              "type": "string"
+            },
+            {
+              "id": "2afd58fa-0662-4b0d-9a68-709f96937f5c",
+              "name": "stored",
+              "value": true,
+              "type": "boolean"
+            },
+            {
+              "id": "80d3f7e5-4fc9-402c-9602-15d4a75bef05",
+              "name": "result",
+              "value": "stored",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        896,
+        -96
+      ],
+      "id": "8eb1b13d-2e7b-49ee-8c53-524956d8237f",
+      "name": "ResultStored"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ba664e82-e785-4d8e-96d8-3641a9637825",
+              "name": "report_id",
+              "value": "={{ $('FromIntake').item.json.report_id }}",
+              "type": "string"
+            },
+            {
+              "id": "2afd58fa-0662-4b0d-9a68-709f96937f5c",
+              "name": "stored",
+              "value": false,
+              "type": "boolean"
+            },
+            {
+              "id": "80d3f7e5-4fc9-402c-9602-15d4a75bef05",
+              "name": "result",
+              "value": "duplicate",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        96
+      ],
+      "id": "c931bdeb-4f16-4d75-8e96-50b72f118f5a",
+      "name": "ResultDuplicate"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "FromIntake": {
+      "main": [
+        [
+          {
+            "node": "CheckReportExists",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CheckReportExists": {
+      "main": [
+        [
+          {
+            "node": "ReportIsNew",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ReportIsNew": {
+      "main": [
+        [
+          {
+            "node": "InsertReport",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "ResultDuplicate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "InsertReport": {
+      "main": [
+        [
+          {
+            "node": "ResultStored",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "nodeGroups": [],
+  "id": "YPTusQYNEmPw9QEN",
+  "tags": []
+}

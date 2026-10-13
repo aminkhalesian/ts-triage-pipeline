@@ -1,0 +1,65 @@
+{
+  "name": "TS - Error Handler",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6271d7c0-983a-42f8-84d7-9ba0a49f767c",
+      "name": "OnWorkflowError"
+    },
+    {
+      "parameters": {
+        "sendTo": "you@example.com",
+        "subject": "=[n8n error] {{ $json.workflow.name }} failed at {{ $json.execution.lastNodeExecuted }}",
+        "emailType": "text",
+        "message": "=A workflow failed.\n\nWorkflow: {{ $json.workflow.name }}\nFailed node: {{ $json.execution.lastNodeExecuted }}\nError: {{ $json.execution.error.message }}\nTime: {{ $now }}\n\nOpen this execution:\n{{ $json.execution.url }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "967bd67c-27ea-43a6-a18f-2b53e18185ee",
+      "name": "SendErrorAlert",
+      "webhookId": "c27603cc-48e7-45db-990d-a254b2bef185",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OnWorkflowError": {
+      "main": [
+        [
+          {
+            "node": "SendErrorAlert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "nodeGroups": [],
+  "id": "7qzBhMJkDTVu4MFW",
+  "tags": []
+}

@@ -1,0 +1,400 @@
+{
+  "name": "TS - SLA Monitor",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "cd7efb83-b44b-4e21-abd8-6f7c71538ceb",
+      "name": "StartSLACheck"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Rt5u7usGrGMeiwvL",
+          "mode": "list",
+          "cachedResultName": "ts_reports",
+          "cachedResultUrl": "/projects/<project-id>/datatables/Rt5u7usGrGMeiwvL"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "4d4d910c-1f5c-4647-81d0-25c0b978e071",
+      "name": "GetAllReports"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "90b65b53-8398-4fbf-b2f3-1a73e1d27d31",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "new",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            },
+            {
+              "id": "fbff3522-6f4b-46b4-a557-47f99668f9c2",
+              "leftValue": "={{ $json.escalated_at }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        0
+      ],
+      "id": "a388dd2f-b196-49d4-8234-8454d6c5124c",
+      "name": "OpenNotEscalated"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "df3a3b17-6090-4573-bd32-6aec80e9e5e3",
+              "name": "sla_minutes",
+              "value": "={{ { urgent: 15, high: 240, normal: 1440 }[$json.priority] }}",
+              "type": "number"
+            },
+            {
+              "id": "0544862d-dd50-4e46-ab9b-79ac2fa87774",
+              "name": "minutes_open",
+              "value": "={{ Math.round(($now.toMillis() - DateTime.fromISO($json.received_at).toMillis()) / 60000) }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        672,
+        0
+      ],
+      "id": "1a729089-c0fa-4988-8481-0f20fd389588",
+      "name": "CalculateSLA"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "3d13a3ad-d8ef-40da-8047-488a957fdc9b",
+              "leftValue": "={{ $json.minutes_open }}",
+              "rightValue": "={{ $json.sla_minutes }}",
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        896,
+        0
+      ],
+      "id": "0f95968c-d0c7-4a56-8d5e-48ab3caaf3b4",
+      "name": "IsOverdue"
+    },
+    {
+      "parameters": {
+        "sendTo": "you@example.com",
+        "subject": "=[SLA breach] {{ $json.priority }} report {{ $json.report_id }} is {{ $json.minutes_open - $json.sla_minutes }} min overdue",
+        "emailType": "text",
+        "message": "=Report {{ $json.report_id }} has passed its response deadline.\n\nCategory: {{ $json.ai_category }}\nPriority: {{ $json.priority }}\nAI confidence: {{ $json.ai_confidence }}\nStatus: {{ $json.status }}\nOpen for: {{ $json.minutes_open }} min (deadline: {{ $json.sla_minutes }} min)\n\nContent:\n{{ $json.content_text }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "fc232a82-a35f-4c31-8cd7-8584118fe561",
+      "name": "SendSLAAlert",
+      "webhookId": "e88738d7-3ad1-455c-bad6-6d6db2c185fc",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Rt5u7usGrGMeiwvL",
+          "mode": "list",
+          "cachedResultName": "ts_reports",
+          "cachedResultUrl": "/projects/<project-id>/datatables/Rt5u7usGrGMeiwvL"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "report_id",
+              "keyValue": "={{ $('IsOverdue').item.json.report_id }}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "escalated_at": "={{ $now }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "report_id",
+              "displayName": "report_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "reporter_id",
+              "displayName": "reporter_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "content_text",
+              "displayName": "content_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "user_reason",
+              "displayName": "user_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "status",
+              "displayName": "status",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "received_at",
+              "displayName": "received_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "ai_category",
+              "displayName": "ai_category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "priority",
+              "displayName": "priority",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "ai_confidence",
+              "displayName": "ai_confidence",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "triaged_at",
+              "displayName": "triaged_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": true
+            },
+            {
+              "id": "escalated_at",
+              "displayName": "escalated_at",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1344,
+        0
+      ],
+      "id": "525308e9-9640-4742-8ea2-dada47b84630",
+      "name": "MarkEscalated"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "StartSLACheck": {
+      "main": [
+        [
+          {
+            "node": "GetAllReports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetAllReports": {
+      "main": [
+        [
+          {
+            "node": "OpenNotEscalated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenNotEscalated": {
+      "main": [
+        [
+          {
+            "node": "CalculateSLA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CalculateSLA": {
+      "main": [
+        [
+          {
+            "node": "IsOverdue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IsOverdue": {
+      "main": [
+        [
+          {
+            "node": "SendSLAAlert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SendSLAAlert": {
+      "main": [
+        [
+          {
+            "node": "MarkEscalated",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "7qzBhMJkDTVu4MFW",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "nodeGroups": [],
+  "id": "AtGNvHkbakVty8JK",
+  "tags": []
+}

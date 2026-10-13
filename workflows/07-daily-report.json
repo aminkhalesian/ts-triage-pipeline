@@ -1,0 +1,120 @@
+{
+  "name": "TS - Daily Report",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "05c5ef33-4382-4aa0-888a-48055bda3c1c",
+      "name": "StartReport"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Rt5u7usGrGMeiwvL",
+          "mode": "list",
+          "cachedResultName": "ts_reports",
+          "cachedResultUrl": "/projects/<project-id>/datatables/Rt5u7usGrGMeiwvL"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "ffdcae0d-2f43-462e-856a-af04fd52c609",
+      "name": "GetAllReports"
+    },
+    {
+      "parameters": {
+        "jsCode": "const rows = $input.all().map(item => item.json);\nconst now = Date.now();\nconst count = (test) => rows.filter(test).length;\n\n// 1. How many reports are in each status\nconst total = rows.length;\nconst newCount = count(r => r.status === 'new');\nconst triaged = count(r => r.status === 'triaged');\nconst needsReview = count(r => r.status === 'needs_review');\n\n// 2. Share decided by AI alone\nconst decided = triaged + needsReview;\nconst autoTriageRate = decided ? Math.round(triaged / decided * 100) : 0;\n\n// 3. How often the AI disagreed with the user's reason\nconst withAI = rows.filter(r => r.ai_category);\nconst relabeled = withAI.filter(r => r.ai_category !== r.user_reason).length;\nconst relabelRate = withAI.length ? Math.round(relabeled / withAI.length * 100) : 0;\n\n// 4. SLA breaches\nconst slaBreaches = count(r => r.escalated_at);\n\n// 5. Silent-failure checks\nconst STUCK_MINUTES = 10;\nconst stuckReports = rows\n  .filter(r => r.status === 'new' && (now - new Date(r.received_at).getTime()) / 60000 > STUCK_MINUTES)\n  .map(r => r.report_id);\nconst missingCategory = rows\n  .filter(r => r.status !== 'new' && !r.ai_category)\n  .map(r => r.report_id);\n\nreturn [{ json: {\n  total, newCount, triaged, needsReview,\n  autoTriageRate, relabeled, relabelRate,\n  slaBreaches, stuckReports, missingCategory\n}}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "35fbb2c0-de42-4b1d-a7f9-38e0188cb552",
+      "name": "CalculateMetrics"
+    },
+    {
+      "parameters": {
+        "sendTo": "you@example.com",
+        "subject": "={{ ($json.stuckReports.length || $json.missingCategory.length) ? '[ACTION NEEDED] ' : '' }}T&S daily report: {{ $json.total }} reports, {{ $json.autoTriageRate }}% auto-triaged",
+        "message": "=<b>Reports:</b> {{ $json.total }}<br>\nNew: {{ $json.newCount }} | Triaged: {{ $json.triaged }} | Needs review: {{ $json.needsReview }}<br><br>\n<b>Auto-triage rate:</b> {{ $json.autoTriageRate }}%<br>\n<b>AI corrected the user's reason:</b> {{ $json.relabeled }} times ({{ $json.relabelRate }}%)<br>\n<b>SLA breaches:</b> {{ $json.slaBreaches }}<br><br>\n<b>Health checks</b><br>\nStuck in \"new\" for over 10 min: {{ $json.stuckReports.join(', ') || 'none' }}<br>\nProcessed but missing a category: {{ $json.missingCategory.join(', ') || 'none' }}",
+        "options": {
+          "appendAttribution": false
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "503dfcb6-df68-4c0f-8b42-aca22891bee1",
+      "name": "SendDailyReport",
+      "webhookId": "50b25a72-9123-43de-b2c5-04f94d46c2c1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "StartReport": {
+      "main": [
+        [
+          {
+            "node": "GetAllReports",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "GetAllReports": {
+      "main": [
+        [
+          {
+            "node": "CalculateMetrics",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "CalculateMetrics": {
+      "main": [
+        [
+          {
+            "node": "SendDailyReport",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "nodeGroups": [],
+  "id": "gxPbpZQKRomLyql7",
+  "tags": []
+}

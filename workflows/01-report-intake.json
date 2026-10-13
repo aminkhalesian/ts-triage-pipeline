@@ -1,0 +1,303 @@
+{
+  "name": "TS - Report Intake",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ts/report",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        16,
+        -288
+      ],
+      "id": "c5f1810d-7797-40fe-aee8-3de22858c8de",
+      "name": "ReceiveReport",
+      "webhookId": "45cfa55c-f3d9-4c7b-bf81-2c20e18bcd19",
+      "credentials": {
+        "httpHeaderAuth": {
+          "id": "",
+          "name": "TS Intake Key"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "0952ec91-0c31-4cbf-aae3-49bd0fcf086b",
+              "leftValue": "={{ $json.body.report_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "e849a35a-8013-4f58-821c-bc937161948c",
+              "leftValue": "={{ $json.body.reporter_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "8029ce80-7799-41c4-bbc6-69bab8630ed0",
+              "leftValue": "={{ $json.body.content_text }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "c2351e67-904f-4439-b0ab-de63623e406b",
+              "leftValue": "={{ $json.body.user_reason }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        240,
+        -288
+      ],
+      "id": "f969733e-0557-4138-9ae4-b09c261c3b1e",
+      "name": "ValidateReport"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"status\": \"accepted\",\n  \"report_id\": \"{{ $('ReceiveReport').item.json.body.report_id }}\",\n  \"result\": \"{{ $json.result }}\",\n  \"stored\": {{ $json.stored }},\n  \"message\": \"Report received\"\n}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        688,
+        -480
+      ],
+      "id": "96002d74-94b0-49be-a945-4bbebb125092",
+      "name": "RespondAccepted"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"error\",\n  \"message\": \"Missing required fields: report_id, reporter_id, content_text, user_reason\"\n}",
+        "options": {
+          "responseCode": 400
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        464,
+        -192
+      ],
+      "id": "7879f019-5862-4b1d-b92e-7bcc3edffb2e",
+      "name": "RespondInvalid"
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "YPTusQYNEmPw9QEN",
+          "mode": "list",
+          "cachedResultUrl": "/workflow/YPTusQYNEmPw9QEN",
+          "cachedResultName": "TS - Store Report"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "report_id": "={{ $json.body.report_id }}",
+            "reporter_id": "={{ $json.body.reporter_id }}",
+            "content_text": "={{ $json.body.content_text }}",
+            "user_reason": "={{ $json.body.user_reason }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "report_id",
+              "displayName": "report_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "reporter_id",
+              "displayName": "reporter_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "content_text",
+              "displayName": "content_text",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            },
+            {
+              "id": "user_reason",
+              "displayName": "user_reason",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "canBeUsedToMatch": true,
+              "type": "string"
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        464,
+        -384
+      ],
+      "id": "eb468c9e-e9bc-4f1b-a596-ecbd1e289726",
+      "name": "StoreReport",
+      "onError": "continueErrorOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"status\": \"error\",\n  \"message\": \"Report could not be stored. Please retry later.\"\n}",
+        "options": {
+          "responseCode": 503
+        }
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        688,
+        -288
+      ],
+      "id": "8dc66a04-91a3-4b9a-9c6e-556ec11a6fed",
+      "name": "RespondUnavailable"
+    },
+    {
+      "parameters": {
+        "errorMessage": "=Storage failed for report {{ $('ReceiveReport').item.json.body.report_id }}"
+      },
+      "type": "n8n-nodes-base.stopAndError",
+      "typeVersion": 1,
+      "position": [
+        912,
+        -288
+      ],
+      "id": "16979349-1a3d-4d31-99f5-50f970fb277d",
+      "name": "FailAfterResponse"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "ReceiveReport": {
+      "main": [
+        [
+          {
+            "node": "ValidateReport",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "ValidateReport": {
+      "main": [
+        [
+          {
+            "node": "StoreReport",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "RespondInvalid",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "StoreReport": {
+      "main": [
+        [
+          {
+            "node": "RespondAccepted",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "RespondUnavailable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "RespondUnavailable": {
+      "main": [
+        [
+          {
+            "node": "FailAfterResponse",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "errorWorkflow": "7qzBhMJkDTVu4MFW",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "nodeGroups": [],
+  "id": "kjnyWmqu4GHrhecT",
+  "tags": []
+}
